@@ -1,23 +1,23 @@
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
-# Установка зависимостей
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копирование файлов приложения
+# Copy application files
 COPY . .
 
-# Создание директорий
+# Create directories
 RUN mkdir -p app/templates app/static/css app/static/js
 
-# Переменные окружения
+# Environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 
-# Порт
+# Port
 EXPOSE 5000
 
-# Запуск приложения
+# Run application
 CMD ["python", "app.py"]
