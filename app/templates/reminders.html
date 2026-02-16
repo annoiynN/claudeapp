@@ -1,10 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Reminders - Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="reminders-page">
+    <div class="page-header">
+        <h2>🔔 Reminders</h2>
+        <button class="btn btn-primary" onclick="showAddReminder()">+ New Reminder</button>
+    </div>
+
+    <!-- Add Form -->
+    <div id="addReminderForm" class="section" style="display: none;">
+        <h3>New Reminder</h3>
+        <form id="reminderForm" class="form">
+            <div class="form-group">
+                <label for="reminderTitle">Title *</label>
+                <input type="text" id="reminderTitle" name="title" required class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3" class="form-control"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="reminderDate">Date *</label>
+                    <input type="date" id="reminderDate" name="reminder_date" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="reminderTime">Time</label>
+                    <input type="time" id="reminderTime" name="reminder_time" class="form-control">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddReminder()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reminders List -->
+    <section class="section">
+        {% if reminders %}
+        <div class="reminders-grid">
+            {% for reminder in reminders %}
+            <div class="reminder-card">
+                <div class="reminder-header">
+                    <h4>{{ reminder.title }}</h4>
+                    <button class="btn btn-success btn-sm" onclick="completeReminder({{ reminder.id }})">
+                        ✓ Done
+                    </button>
+                </div>
+                {% if reminder.description %}
+                <p class="reminder-description">{{ reminder.description }}</p>
+                {% endif %}
+                <div class="reminder-datetime">
+                    <span>📅 {{ reminder.reminder_date }}</span>
+                    {% if reminder.reminder_time %}
+                    <span>⏰ {{ reminder.reminder_time }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>You have no active reminders</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set minimum date to today
+document.getElementById('reminderDate').min = new Date().toISOString().split('T')[0];
+
+function showAddReminder() {
+    document.getElementById('addReminderForm').style.display = 'block';
+}
+
+function hideAddReminder() {
+    document.getElementById('addReminderForm').style.display = 'none';
+    document.getElementById('reminderForm').reset();
+}
+
+document.getElementById('reminderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('reminderTitle').value,
+        description: document.getElementById('description').value,
+        reminder_date: document.getElementById('reminderDate').value,
+        reminder_time: document.getElementById('reminderTime').value
+    };
+    
+    fetch('/reminders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+});
+
+function completeReminder(id) {
+    if (confirm('Mark reminder as completed?')) {
+        fetch(`/reminders/${id}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,10 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Diary - Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="diary-page">
+    <div class="page-header">
+        <h2>📔 Personal Diary</h2>
+        <button class="btn btn-primary" onclick="showAddEntry()">+ New Entry</button>
+    </div>
+
+    <!-- Add Entry Form -->
+    <div id="addEntryForm" class="section" style="display: none;">
+        <h3>New Entry</h3>
+        <form id="diaryForm" class="form">
+            <div class="form-group">
+                <label for="title">Title (optional)</label>
+                <input type="text" id="title" name="title" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="content">Content *</label>
+                <textarea id="content" name="content" rows="8" required class="form-control" placeholder="What happened today?"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="mood">Mood</label>
+                    <select id="mood" name="mood" class="form-control">
+                        <option value="">Not specified</option>
+                        <option value="😊">😊 Great</option>
+                        <option value="🙂">🙂 Good</option>
+                        <option value="😐">😐 Okay</option>
+                        <option value="😔">😔 Sad</option>
+                        <option value="😤">😤 Frustrated</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tags">Tags (comma separated)</label>
+                    <input type="text" id="tags" name="tags" class="form-control" placeholder="work, family, sports">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddEntry()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Entries -->
+    <section class="section">
+        {% if entries %}
+        <div class="diary-entries">
+            {% for entry in entries %}
+            <article class="diary-entry">
+                <div class="entry-header">
+                    <div>
+                        <h3>{{ entry.title or 'Entry from ' + entry.entry_date }}</h3>
+                        <div class="entry-meta">
+                            <span class="entry-date">📅 {{ entry.entry_date }}</span>
+                            {% if entry.mood %}
+                            <span class="entry-mood">{{ entry.mood }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="entry-content">
+                    {{ entry.content }}
+                </div>
+                {% if entry.tags %}
+                <div class="entry-tags">
+                    {% for tag in entry.tags.split(',') %}
+                    <span class="tag">{{ tag.strip() }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>📝 Start keeping a diary! Your first entry awaits.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showAddEntry() {
+    document.getElementById('addEntryForm').style.display = 'block';
+    document.getElementById('content').focus();
+}
+
+function hideAddEntry() {
+    document.getElementById('addEntryForm').style.display = 'none';
+    document.getElementById('diaryForm').reset();
+}
+
+document.getElementById('diaryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('title').value,
+        content: document.getElementById('content').value,
+        mood: document.getElementById('mood').value,
+        tags: document.getElementById('tags').value,
+        entry_date: new Date().toISOString().split('T')[0]
+    };
+    
+    fetch('/diary', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+});
+</script>
+{% endblock %}

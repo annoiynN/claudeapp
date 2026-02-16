@@ -1,10 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Home - Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="welcome-section">
+        <h2>Welcome! 👋</h2>
+        <p class="date">Today: {{ "now"|date:"d.m.Y" }}</p>
+    </div>
+
+    <!-- Active Goals -->
+    <section class="section">
+        <div class="section-header">
+            <h3>🎯 Active Goals</h3>
+            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">All Goals</a>
+        </div>
+        
+        {% if goals %}
+        <div class="goals-grid">
+            {% for goal in goals %}
+            <div class="goal-card">
+                <h4>{{ goal.title }}</h4>
+                <p class="goal-description">{{ goal.description }}</p>
+                <div class="goal-dates">
+                    <span>📅 {{ goal.start_date }} - {{ goal.end_date }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ goal.latest_progress or 0 }}%"></div>
+                </div>
+                <div class="progress-text">{{ goal.latest_progress or 0 }}% completed</div>
+                <a href="{{ url_for('goal_detail', goal_id=goal.id) }}" class="btn btn-primary btn-sm">Details</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>You don't have any active goals yet. Create your first one!</p>
+            <a href="{{ url_for('goals') }}" class="btn btn-primary">Create Goal</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Today's Reminders -->
+    <section class="section">
+        <div class="section-header">
+            <h3>🔔 Today's Reminders</h3>
+            <a href="{{ url_for('reminders') }}" class="btn btn-secondary btn-sm">All Reminders</a>
+        </div>
+        
+        {% if reminders %}
+        <ul class="reminders-list">
+            {% for reminder in reminders %}
+            <li class="reminder-item">
+                <div class="reminder-content">
+                    <strong>{{ reminder.title }}</strong>
+                    {% if reminder.reminder_time %}
+                    <span class="reminder-time">⏰ {{ reminder.reminder_time }}</span>
+                    {% endif %}
+                    {% if reminder.description %}
+                    <p>{{ reminder.description }}</p>
+                    {% endif %}
+                </div>
+                <button class="btn btn-success btn-sm" onclick="completeReminder({{ reminder.id }})">✓</button>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No reminders for today</p>
+        {% endif %}
+    </section>
+
+    <!-- Recent Diary Entries -->
+    <section class="section">
+        <div class="section-header">
+            <h3>📔 Recent Diary Entries</h3>
+            <a href="{{ url_for('diary') }}" class="btn btn-secondary btn-sm">Full Diary</a>
+        </div>
+        
+        {% if recent_entries %}
+        <div class="diary-entries">
+            {% for entry in recent_entries %}
+            <div class="diary-entry-preview">
+                <div class="entry-header">
+                    <strong>{{ entry.title or 'Untitled' }}</strong>
+                    <span class="entry-date">{{ entry.entry_date }}</span>
+                </div>
+                <p class="entry-preview">{{ entry.content[:150] }}{% if entry.content|length > 150 %}...{% endif %}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">No diary entries yet</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function completeReminder(id) {
+    fetch(`/reminders/${id}/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

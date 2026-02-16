@@ -1,10 +1,157 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Analytics - Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="analytics-page">
+    <div class="page-header">
+        <h2>📊 Analytics & Reports</h2>
+    </div>
+
+    <!-- Overall Statistics -->
+    <section class="section">
+        <h3>Overall Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.total_goals }}</div>
+                    <div class="stat-label">Total Goals</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.completed_goals }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.active_goals }}</div>
+                    <div class="stat-label">Active</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.completion_rate }}%</div>
+                    <div class="stat-label">Completion Rate</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activity Chart for Last 30 Days -->
+    <section class="section">
+        <h3>📈 Activity in Last 30 Days</h3>
+        <canvas id="activityChart" width="400" height="200"></canvas>
+    </section>
+
+    <!-- Diary Statistics -->
+    <section class="section">
+        <h3>📔 Diary Entries by Month</h3>
+        <canvas id="diaryChart" width="400" height="200"></canvas>
+    </section>
+
+    <!-- Detailed Information -->
+    <section class="section">
+        <h3>📋 Detailed Information</h3>
+        <div class="info-cards">
+            <div class="info-card">
+                <h4>Average Progress on Active Goals</h4>
+                <p class="info-value">Calculated automatically</p>
+            </div>
+            <div class="info-card">
+                <h4>Most Productive Week</h4>
+                <p class="info-value">Analysis by updates</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Activity chart
+const activityData = {{ stats.recent_progress | tojson }};
+const activityCtx = document.getElementById('activityChart').getContext('2d');
+new Chart(activityCtx, {
+    type: 'line',
+    data: {
+        labels: activityData.map(d => d.date),
+        datasets: [{
+            label: 'Average Progress',
+            data: activityData.map(d => d.avg_progress),
+            borderColor: '#2196F3',
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Number of Updates',
+            data: activityData.map(d => d.updates_count),
+            borderColor: '#FF9800',
+            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+            tension: 0.4,
+            fill: true,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Progress (%)'
+                }
+            },
+            y1: {
+                beginAtZero: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Updates'
+                },
+                grid: {
+                    drawOnChartArea: false
+                }
+            }
+        }
+    }
+});
+
+// Diary chart
+const diaryData = {{ stats.diary_stats | tojson }};
+const diaryCtx = document.getElementById('diaryChart').getContext('2d');
+new Chart(diaryCtx, {
+    type: 'bar',
+    data: {
+        labels: diaryData.map(d => d.month),
+        datasets: [{
+            label: 'Diary Entries',
+            data: diaryData.map(d => d.entries_count),
+            backgroundColor: '#4CAF50',
+            borderColor: '#388E3C',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
