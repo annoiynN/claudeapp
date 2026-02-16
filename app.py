@@ -185,7 +185,8 @@ def index():
     return render_template('index.html',
                            goals=goals,
                            reminders=reminders,
-                           recent_entries=recent_entries)
+                           recent_entries=recent_entries,
+                           today=datetime.now().strftime('%B %d, %Y'))
 
 
 # CRUD для целей
