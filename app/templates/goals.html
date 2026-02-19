@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Goals - Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="goals-page">
+    <div class="page-header">
+        <h2>My Goals</h2>
+        <button class="btn btn-primary" onclick="showAddGoal()">+ New Goal</button>
+    </div>
+
+    <!-- Add Goal Form -->
+    <div id="addGoalForm" class="section" style="display: none;">
+        <h3>Create New Goal</h3>
+        <form id="goalForm" class="form">
+            <div class="form-group">
+                <label for="goalTitle">Title *</label>
+                <input type="text" id="goalTitle" name="title" required class="form-control" placeholder="e.g., Read 'Python for Beginners'">
+            </div>
+            <div class="form-group">
+                <label for="goalDescription">Description</label>
+                <textarea id="goalDescription" name="description" rows="3" class="form-control" placeholder="What do you want to achieve?"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startDate">Start Date *</label>
+                    <input type="date" id="startDate" name="start_date" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date *</label>
+                    <input type="date" id="endDate" name="end_date" required class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="targetDays">Target Days *</label>
+                <input type="number" id="targetDays" name="target_days" min="1" required class="form-control" placeholder="How many days to complete?">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Goal</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddGoal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Goals List -->
+    <section class="section">
+        <h3>All Goals</h3>
+        <div class="goals-tabs">
+            <button class="tab-btn active" onclick="filterGoals('all')">All</button>
+            <button class="tab-btn" onclick="filterGoals('active')">Active</button>
+            <button class="tab-btn" onclick="filterGoals('completed')">Completed</button>
+        </div>
+        
+        <div id="goalsList" class="goals-grid">
+            <!-- Goals will be loaded here -->
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set today as minimum date
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('startDate').value = today;
+document.getElementById('startDate').min = today;
+document.getElementById('endDate').min = today;
+
+// Calculate target days automatically
+document.getElementById('startDate').addEventListener('change', calculateDays);
+document.getElementById('endDate').addEventListener('change', calculateDays);
+
+function calculateDays() {
+    const start = new Date(document.getElementById('startDate').value);
+    const end = new Date(document.getElementById('endDate').value);
+    if (start && end && end >= start) {
+        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById('targetDays').value = days;
+    }
+}
+
+function showAddGoal() {
+    document.getElementById('addGoalForm').style.display = 'block';
+    document.getElementById('goalTitle').focus();
+}
+
+function hideAddGoal() {
+    document.getElementById('addGoalForm').style.display = 'none';
+    document.getElementById('goalForm').reset();
+}
+
+// Load goals
+function loadGoals(filter = 'all') {
+    fetch('/api/goals')
+        .then(response => response.json())
+        .then(goals => {
+            const filteredGoals = filter === 'all' 
+                ? goals 
+                : goals.filter(g => g.status === filter);
+            
+            displayGoals(filteredGoals);
+        });
+}
+
+function displayGoals(goals) {
+    const container = document.getElementById('goalsList');
+    
+    if (goals.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No goals found. Create your first one!</p></div>';
+        return;
+    }
+    
+    container.innerHTML = goals.map(goal => `
+        <div class="goal-card">
+            <h4>${goal.title}</h4>
+            <p class="goal-description">${goal.description || 'No description'}</p>
+            <div class="goal-dates">
+                <span> ${goal.start_date} - ${goal.end_date}</span>
+            </div>
+            <div class="goal-status">
+                <span class="badge badge-${goal.status}">${goal.status}</span>
+            </div>
+            <a href="/goals/${goal.id}" class="btn btn-primary btn-sm">View Details</a>
+        </div>
+    `).join('');
+}
+
+function filterGoals(filter) {
+    // Update active tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    loadGoals(filter);
+}
+
+// Create goal form submission
+document.getElementById('goalForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('goalTitle').value,
+        description: document.getElementById('goalDescription').value,
+        start_date: document.getElementById('startDate').value,
+        end_date: document.getElementById('endDate').value,
+        target_days: parseInt(document.getElementById('targetDays').value)
+    };
+    
+    fetch('/goals', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideAddGoal();
+            loadGoals();
+        }
+    });
+});
+
+// Load goals on page load
+loadGoals();
+</script>
+
+<style>
+.goals-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.goal-status {
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}
