@@ -391,7 +391,9 @@ def progress_chart_data(goal_id):
     })
 
 
+# Инициализация БД при загрузке модуля
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', 8000))
     app.run(debug=False, host='0.0.0.0', port=port)
