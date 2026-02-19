@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime, timedelta
 import sqlite3
+import os
 import json
 from functools import wraps
 
@@ -383,4 +384,5 @@ def progress_chart_data(goal_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 8000))
+    app.run(debug=False, host='0.0.0.0', port=port)
