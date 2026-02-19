@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime, timedelta
 import sqlite3
 import json
+import os
 from functools import wraps
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
@@ -189,28 +190,37 @@ def index():
                            today=datetime.now().strftime('%B %d, %Y'))
 
 
-# CRUD для целей
-@app.route('/goals', methods=['GET', 'POST'])
-def goals():
-    if request.method == 'POST':
-        data = request.json
-        with get_db() as conn:
-            conn.execute('''
-                         INSERT INTO goals (title, description, start_date, end_date, target_days)
-                         VALUES (?, ?, ?, ?, ?)
-                         ''', (
-                             data['title'],
-                             data.get('description', ''),
-                             data['start_date'],
-                             data['end_date'],
-                             data['target_days']
-                         ))
-            conn.commit()
-        return jsonify({'success': True})
+# Страница управления целями (HTML)
+@app.route('/goals')
+def goals_page():
+    return render_template('goals.html')
 
+
+# API для получения списка целей
+@app.route('/api/goals', methods=['GET'])
+def goals_api_get():
     with get_db() as conn:
         goals = conn.execute('SELECT * FROM goals ORDER BY created_at DESC').fetchall()
     return jsonify([dict(g) for g in goals])
+
+
+# Создание новой цели
+@app.route('/goals', methods=['POST'])
+def goals_create():
+    data = request.json
+    with get_db() as conn:
+        conn.execute('''
+                     INSERT INTO goals (title, description, start_date, end_date, target_days)
+                     VALUES (?, ?, ?, ?, ?)
+                     ''', (
+                         data['title'],
+                         data.get('description', ''),
+                         data['start_date'],
+                         data['end_date'],
+                         data['target_days']
+                     ))
+        conn.commit()
+    return jsonify({'success': True})
 
 
 @app.route('/goals/<int:goal_id>')
@@ -228,7 +238,7 @@ def goal_detail(goal_id):
         return render_template('goal_detail.html',
                                goal=dict(goal),
                                updates=[dict(u) for u in updates])
-    return "Цель не найдена", 404
+    return "Goal not found", 404
 
 
 @app.route('/goals/<int:goal_id>/progress', methods=['POST'])
@@ -383,4 +393,5 @@ def progress_chart_data(goal_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 8000))
+    app.run(debug=False, host='0.0.0.0', port=port)
