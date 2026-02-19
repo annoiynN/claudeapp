@@ -13,7 +13,7 @@
     <section class="section">
         <div class="section-header">
             <h3>🎯 Active Goals</h3>
-            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">All Goals</a>
+            <a href="{{ url_for('goals_page') }}" class="btn btn-secondary btn-sm">All Goals</a>
         </div>
         
         {% if goals %}
@@ -36,7 +36,7 @@
         {% else %}
         <div class="empty-state">
             <p>You don't have any active goals yet. Create your first one!</p>
-            <a href="{{ url_for('goals') }}" class="btn btn-primary">Create Goal</a>
+            <a href="{{ url_for('goals_page') }}" class="btn btn-primary">Create Goal</a>
         </div>
         {% endif %}
     </section>
