@@ -9,10 +9,10 @@ app = Flask(__name__, template_folder='app/templates', static_folder='app/static
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 
 # Получаем параметры подключения из переменных окружения
-DB_SERVER = os.environ.get('DB_SERVER', 'progress-tracker-server.database.windows.net')
-DB_NAME = os.environ.get('DB_NAME', 'progress-tracker-db')
-DB_USER = os.environ.get('DB_USER', 'Dmytro')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', 'WRX2if3vm5LjkQw')
+DB_SERVER = os.environ.get('DB_SERVER')
+DB_NAME = os.environ.get('DB_NAME')
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
 
 
 # Декоратор для работы с БД
