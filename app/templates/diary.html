@@ -61,6 +61,7 @@
                             {% endif %}
                         </div>
                     </div>
+                    <button class="btn btn-danger btn-sm" onclick="deleteEntry({{ entry.id }})">🗑 Delete</button>
                 </div>
                 <div class="entry-content">
                     {{ entry.content }}
@@ -98,7 +99,7 @@ function hideAddEntry() {
 
 document.getElementById('diaryForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const formData = {
         title: document.getElementById('title').value,
         content: document.getElementById('content').value,
@@ -106,20 +107,45 @@ document.getElementById('diaryForm').addEventListener('submit', function(e) {
         tags: document.getElementById('tags').value,
         entry_date: new Date().toISOString().split('T')[0]
     };
-    
+
     fetch('/diary', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            location.reload();
-        }
+        if (data.success) location.reload();
     });
 });
+
+function deleteEntry(id) {
+    if (confirm('Are you sure you want to delete this diary entry?')) {
+        fetch(`/diary/${id}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) location.reload();
+        });
+    }
+}
 </script>
+
+<style>
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+.btn-danger:hover { background-color: #c82333; }
+</style>
 {% endblock %}

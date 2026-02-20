@@ -60,13 +60,11 @@
 
 {% block scripts %}
 <script>
-// Set today as minimum date
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('startDate').value = today;
 document.getElementById('startDate').min = today;
 document.getElementById('endDate').min = today;
 
-// Calculate target days automatically
 document.getElementById('startDate').addEventListener('change', calculateDays);
 document.getElementById('endDate').addEventListener('change', calculateDays);
 
@@ -89,27 +87,25 @@ function hideAddGoal() {
     document.getElementById('goalForm').reset();
 }
 
-// Load goals
 function loadGoals(filter = 'all') {
     fetch('/api/goals')
         .then(response => response.json())
         .then(goals => {
-            const filteredGoals = filter === 'all' 
-                ? goals 
+            const filteredGoals = filter === 'all'
+                ? goals
                 : goals.filter(g => g.status === filter);
-            
             displayGoals(filteredGoals);
         });
 }
 
 function displayGoals(goals) {
     const container = document.getElementById('goalsList');
-    
+
     if (goals.length === 0) {
         container.innerHTML = '<div class="empty-state"><p>No goals found. Create your first one!</p></div>';
         return;
     }
-    
+
     container.innerHTML = goals.map(goal => `
         <div class="goal-card">
             <h4>${goal.title}</h4>
@@ -120,23 +116,36 @@ function displayGoals(goals) {
             <div class="goal-status">
                 <span class="badge badge-${goal.status}">${goal.status}</span>
             </div>
-            <a href="/goals/${goal.id}" class="btn btn-primary btn-sm">View Details</a>
+            <div class="goal-actions" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <a href="/goals/${goal.id}" class="btn btn-primary btn-sm">View Details</a>
+                <button class="btn btn-danger btn-sm" onclick="deleteGoal(${goal.id})">🗑 Delete</button>
+            </div>
         </div>
     `).join('');
 }
 
+function deleteGoal(id) {
+    if (confirm('Are you sure you want to delete this goal?')) {
+        fetch(`/goals/${id}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) loadGoals();
+        });
+    }
+}
+
 function filterGoals(filter) {
-    // Update active tab
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
     loadGoals(filter);
 }
 
-// Create goal form submission
 document.getElementById('goalForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const formData = {
         title: document.getElementById('goalTitle').value,
         description: document.getElementById('goalDescription').value,
@@ -144,12 +153,10 @@ document.getElementById('goalForm').addEventListener('submit', function(e) {
         end_date: document.getElementById('endDate').value,
         target_days: parseInt(document.getElementById('targetDays').value)
     };
-    
+
     fetch('/goals', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
     })
     .then(response => response.json())
@@ -161,7 +168,6 @@ document.getElementById('goalForm').addEventListener('submit', function(e) {
     });
 });
 
-// Load goals on page load
 loadGoals();
 </script>
 
@@ -184,17 +190,20 @@ loadGoals();
     transition: all 0.3s;
 }
 
-.tab-btn:hover {
-    color: var(--primary-color);
-}
-
+.tab-btn:hover { color: var(--primary-color); }
 .tab-btn.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
 }
 
-.goal-status {
-    margin-top: 1rem;
+.goal-status { margin-top: 1rem; }
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
+.btn-danger:hover { background-color: #c82333; }
 </style>
 {% endblock %}
