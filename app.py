@@ -443,7 +443,44 @@ def progress_chart_data(goal_id):
         cursor.close()
         conn.close()
 
+@app.route('/goals/<int:goal_id>/delete', methods=['POST'])
+def delete_goal(goal_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM progress_updates WHERE goal_id = %s', (goal_id,))
+        cursor.execute('DELETE FROM goals WHERE id = %s', (goal_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    finally:
+        cursor.close()
+        conn.close()
 
+
+@app.route('/diary/<int:entry_id>/delete', methods=['POST'])
+def delete_diary_entry(entry_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM diary_entries WHERE id = %s', (entry_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/reminders/<int:reminder_id>/delete', methods=['POST'])
+def delete_reminder(reminder_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM reminders WHERE id = %s', (reminder_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    finally:
+        cursor.close()
+        conn.close()
 # Инициализация БД при загрузке модуля
 init_db()
 
