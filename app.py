@@ -138,7 +138,7 @@ def index():
         cursor.execute('''
                        SELECT *
                        FROM reminders
-                       WHERE reminder_date = ?
+                       WHERE reminder_date = %s
                          AND is_completed = 0
                        ORDER BY reminder_time
                        ''', (today,))
@@ -193,7 +193,7 @@ def goals_create():
     try:
         cursor.execute('''
                        INSERT INTO goals (title, description, start_date, end_date, target_days)
-                       VALUES (?, ?, ?, ?, ?)
+                       VALUES (%s, %s, %s, %s, %s)
                        ''', (
                            data['title'],
                            data.get('description', ''),
@@ -214,14 +214,14 @@ def goal_detail(goal_id):
     cursor = conn.cursor()
 
     try:
-        cursor.execute('SELECT * FROM goals WHERE id = ?', (goal_id,))
+        cursor.execute('SELECT * FROM goals WHERE id = %s', (goal_id,))
         goal_row = cursor.fetchone()
         goal = row_to_dict(cursor, goal_row)
 
         cursor.execute('''
                        SELECT *
                        FROM progress_updates
-                       WHERE goal_id = ?
+                       WHERE goal_id = %s
                        ORDER BY update_date ASC
                        ''', (goal_id,))
         updates = rows_to_dict_list(cursor, cursor.fetchall())
@@ -245,7 +245,7 @@ def add_progress(goal_id):
     try:
         cursor.execute('''
                        INSERT INTO progress_updates (goal_id, update_date, progress_percent, notes)
-                       VALUES (?, ?, ?, ?)
+                       VALUES (%s, %s, %s, %s)
                        ''', (
                            goal_id,
                            data.get('update_date', datetime.now().date()),
@@ -255,7 +255,7 @@ def add_progress(goal_id):
 
         # Если прогресс 100%, помечаем цель как завершенную
         if data['progress_percent'] >= 100:
-            cursor.execute('UPDATE goals SET status = ? WHERE id = ?', ('completed', goal_id))
+            cursor.execute('UPDATE goals SET status = %s WHERE id = %s', ('completed', goal_id))
 
         conn.commit()
         return jsonify({'success': True})
@@ -292,7 +292,7 @@ def add_diary_entry():
     try:
         cursor.execute('''
                        INSERT INTO diary_entries (entry_date, title, content, mood, tags)
-                       VALUES (?, ?, ?, ?, ?)
+                       VALUES (%s, %s, %s, %s, %s)
                        ''', (
                            data.get('entry_date', datetime.now().date()),
                            data.get('title', ''),
@@ -318,7 +318,7 @@ def reminders():
         try:
             cursor.execute('''
                            INSERT INTO reminders (title, description, reminder_date, reminder_time)
-                           VALUES (?, ?, ?, ?)
+                           VALUES (%s, %s, %s, %s)
                            ''', (
                                data['title'],
                                data.get('description', ''),
@@ -354,7 +354,7 @@ def complete_reminder(reminder_id):
     cursor = conn.cursor()
 
     try:
-        cursor.execute('UPDATE reminders SET is_completed = 1 WHERE id = ?', (reminder_id,))
+        cursor.execute('UPDATE reminders SET is_completed = 1 WHERE id = %s', (reminder_id,))
         conn.commit()
         return jsonify({'success': True})
     finally:
@@ -373,10 +373,10 @@ def analytics():
         cursor.execute('SELECT COUNT(*) as count FROM goals')
         total_goals = cursor.fetchone()[0]
 
-        cursor.execute('SELECT COUNT(*) as count FROM goals WHERE status = ?', ('completed',))
+        cursor.execute('SELECT COUNT(*) as count FROM goals WHERE status = %s', ('completed',))
         completed_goals = cursor.fetchone()[0]
 
-        cursor.execute('SELECT COUNT(*) as count FROM goals WHERE status = ?', ('active',))
+        cursor.execute('SELECT COUNT(*) as count FROM goals WHERE status = %s', ('active',))
         active_goals = cursor.fetchone()[0]
 
         # Прогресс за последние 30 дней
@@ -386,7 +386,7 @@ def analytics():
                    AVG(CAST(progress_percent AS FLOAT)) as avg_progress, 
                    COUNT(*) as updates_count
                        FROM progress_updates
-                       WHERE update_date >= ?
+                       WHERE update_date >= %s
                        GROUP BY CAST (update_date AS DATE)
                        ORDER BY date
                        ''', (thirty_days_ago,))
@@ -430,7 +430,7 @@ def progress_chart_data(goal_id):
         cursor.execute('''
                        SELECT update_date, progress_percent
                        FROM progress_updates
-                       WHERE goal_id = ?
+                       WHERE goal_id = %s
                        ORDER BY update_date
                        ''', (goal_id,))
         updates = rows_to_dict_list(cursor, cursor.fetchall())
